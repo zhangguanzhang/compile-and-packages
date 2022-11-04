@@ -1,0 +1,22 @@
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+.idea/*
+.DS_Store
+
+# CMake
+cmake-build-*/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+**/rpmbuild/BUILD
+**/rpmbuild/BUILDROOT
+**/rpmbuild/RPMS
+**/rpmbuild/SRPMS
+
+*.exe
+*.exe~
