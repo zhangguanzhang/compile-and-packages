@@ -4,16 +4,17 @@ def dict_from_env_file(fpath):
     D = {}
     try:
         import re
-        f = open(fpath, 'rt')
-        for line in f.readlines():
-            line = line.strip()
-            m = re.match(r'(^\s*[^#=]+)=(.+)', line)
-            if m:
-                key, val = m.groups()
-                D.update({key: val.strip('\'"')})
+        #f = open(fpath, 'rt')
+        with open (fpath, 'rt') as f:
+            for line in f.readlines():
+                line = line.strip()
+                m = re.match(r'(^\s*[^#=]+)=(.+)', line)
+                if m:
+                    key, val = m.groups()
+                    D.update({key: val.strip('\'"')})
     except FileNotFoundError:
         pass
-    finally:
-        f.close()
+    # finally:
+    #     f.close()
 
     return D

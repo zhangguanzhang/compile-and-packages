@@ -13,9 +13,8 @@ docker buildx build --platform linux/amd64,linux/arm64 \
     --build-arg BASE_IMG=centos:7 . \
     -f buildx.Dockerfile \
     --target bin --output .
-# 如果没同样 os 的不同架构，可以自行编译
-docker build --build-arg BASE_IMG=centos:7 . \
-    -f buildx.Dockerfile 
+# 如果没某个 os 的不同架构或者不用 buildx，可以自行编译
+docker build --build-arg BASE_IMG=centos:7 .
 # 或者实机上 rpmbuild 构建，确保 rpmbuild 目录在 /root/ 下
 cd rpmbuild
 rpmbuild -bb SPECS/supervisor.spec --define="GOARCH $GOARCH" --define="version ${version}" 
