@@ -2,6 +2,7 @@ ARG BASE_IMG=centos:7
 FROM ${BASE_IMG} AS rpm
 ARG version=4.2.4
 ARG env_file_support=1
+ARG PYI_OPS="--onefile"
 
 # 利用 python3 的 pip 安装 supervisor 和 pyinstaller , pyinstaller 依赖系统有 binutils
 RUN . /etc/os-release && \
@@ -36,14 +37,14 @@ RUN mkdir -p SOURCES RPMS && \
 # 相关文件可以通过 rpm -ql supervisor | grep -Pv '\.py|/site-packages/|/share/'
 # /usr/local/lib/python3.7/site-packages/
     op_file=$(find /usr/ -type f -name 'options.py' -path '*/supervisor/*') && \
-    #sed -ri "/^VERSION\s+=\s+/s/= .+/= \"${ver}\"#" $op_file && \
-    sed -ri '/^VERSION\s+=\s+/s#= .+#= "'"${ver}"'"#' $op_file && \
-	dir=$(find /usr -type d -name supervisor -path '*/site-packages/*'  -exec dirname {} \;) && \
-	pyinstaller --onefile -p $dir `which pidproxy` && \
-	pyinstaller --onefile -p $dir `which supervisord` && \
-	pyinstaller --onefile -p $dir `which supervisorctl` && \
-    pyinstaller --onefile -p $dir `which echo_supervisord_conf` && \
-	mv dist/* SOURCES/
+    #sed -ri "/^VERSION\s+=\s+/s/= .+/= \"${version}\"#" $op_file && \
+    sed -ri '/^VERSION\s+=\s+/s#= .+#= "'"${version}"'"#' $op_file && \
+    dir=$(find /usr -type d -name supervisor -path '*/site-packages/*'  -exec dirname {} \;) && \
+    pyinstaller ${PYI_OPS} -p $dir `which pidproxy` && \
+    pyinstaller ${PYI_OPS} -p $dir `which supervisord` && \
+    pyinstaller ${PYI_OPS} -p $dir `which supervisorctl` && \
+    pyinstaller ${PYI_OPS} -p $dir `which echo_supervisord_conf` && \
+    mv dist/* SOURCES/
 
 COPY rpmbuild .
 
