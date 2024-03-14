@@ -1,0 +1,52 @@
+From e6c5bc462c81e11e7ef6a14e7cd8984d385dc945 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Tue, 19 Mar 2024 10:41:06 +0800
+Subject: [PATCH] support loong64
+
+---
+ Dockerfile | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index a6f74d07..452c1196 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -15,7 +15,7 @@
+ #   See the License for the specific language governing permissions and
+ #   limitations under the License.
+ 
+-ARG GO_VERSION=1.21.8
++ARG GO_IMG=golang:1.21.8-alpine
+ ARG XX_VERSION=1.2.1
+ ARG GOLANGCI_LINT_VERSION=v1.55.2
+ ARG ADDLICENSE_VERSION=v1.0.0
+@@ -33,7 +33,7 @@ FROM crazymax/osxcross:11.3-alpine AS osxcross
+ FROM golangci/golangci-lint:${GOLANGCI_LINT_VERSION}-alpine AS golangci-lint
+ FROM ghcr.io/google/addlicense:${ADDLICENSE_VERSION} AS addlicense
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine AS base
++FROM ${GO_IMG} AS base
+ COPY --from=xx / /
+ RUN apk add --no-cache \
+       clang \
+@@ -75,6 +75,7 @@ RUN --mount=type=bind,target=.,rw <<EOT
+ EOT
+ 
+ FROM build-base AS build
++ARG GOARCH=amd64
+ ARG BUILD_TAGS
+ ARG BUILD_FLAGS
+ ARG TARGETPLATFORM
+@@ -84,8 +85,7 @@ RUN --mount=type=bind,target=. \
+     --mount=type=bind,from=osxcross,src=/osxsdk,target=/xx-sdk \
+     xx-go --wrap && \
+     if [ "$(xx-info os)" == "darwin" ]; then export CGO_ENABLED=1; fi && \
+-    make build GO_BUILDTAGS="$BUILD_TAGS" DESTDIR=/out && \
+-    xx-verify --static /out/docker-compose
++    make build GO_BUILDTAGS="$BUILD_TAGS" DESTDIR=/out
+ 
+ FROM build-base AS lint
+ ARG BUILD_TAGS
+-- 
+2.25.1
+
