@@ -18,5 +18,7 @@ atlassian-ide-plugin.xml
 **/rpmbuild/RPMS
 **/rpmbuild/SRPMS
 
+**/build_src
+
 *.exe
 *.exe~

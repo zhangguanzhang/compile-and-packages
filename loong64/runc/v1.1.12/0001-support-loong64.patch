@@ -1,0 +1,106 @@
+From 28252d3c00c098806cc5e0622e39c281d6fff9ac Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Mon, 4 Mar 2024 10:51:13 +0800
+Subject: [PATCH] support loong64
+
+---
+ Dockerfile        | 12 +++---------
+ script/lib.sh     |  3 +++
+ script/seccomp.sh | 13 +++++++++++--
+ 3 files changed, 17 insertions(+), 11 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index d24756bc..751dfb01 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,8 +1,8 @@
+-ARG GO_VERSION=1.20
++ARG GO_IMG=golang:1.20-bullseye
+ ARG BATS_VERSION=v1.9.0
+ ARG LIBSECCOMP_VERSION=2.5.4
+ 
+-FROM golang:${GO_VERSION}-bullseye
++FROM ${GO_IMG}
+ ARG DEBIAN_FRONTEND=noninteractive
+ ARG CRIU_REPO=https://download.opensuse.org/repositories/devel:/tools:/criu/Debian_11
+ 
+@@ -13,12 +13,6 @@ RUN KEYFILE=/usr/share/keyrings/criu-repo-keyring.gpg; \
+     && apt-get install -y --no-install-recommends \
+         build-essential \
+         criu \
+-        gcc-aarch64-linux-gnu libc-dev-arm64-cross \
+-        gcc-arm-linux-gnueabi libc-dev-armel-cross \
+-        gcc-arm-linux-gnueabihf libc-dev-armhf-cross \
+-        gcc-powerpc64le-linux-gnu libc-dev-ppc64el-cross \
+-        gcc-s390x-linux-gnu libc-dev-s390x-cross \
+-        gcc-riscv64-linux-gnu libc-dev-riscv64-cross \
+         curl \
+         gawk \
+         gcc \
+@@ -53,7 +47,7 @@ RUN cd /tmp \
+ ARG LIBSECCOMP_VERSION
+ COPY script/seccomp.sh script/lib.sh /tmp/script/
+ RUN mkdir -p /opt/libseccomp \
+-    && /tmp/script/seccomp.sh "$LIBSECCOMP_VERSION" /opt/libseccomp arm64 armel armhf ppc64le riscv64 s390x
++    && /tmp/script/seccomp.sh "$LIBSECCOMP_VERSION" /opt/libseccomp loong64
+ ENV LIBSECCOMP_VERSION=$LIBSECCOMP_VERSION
+ ENV LD_LIBRARY_PATH=/opt/libseccomp/lib
+ ENV PKG_CONFIG_PATH=/opt/libseccomp/lib/pkgconfig
+diff --git a/script/lib.sh b/script/lib.sh
+index 9fee8e29..123dffe8 100644
+--- a/script/lib.sh
++++ b/script/lib.sh
+@@ -29,6 +29,9 @@ function set_cross_vars() {
+ 	s390x)
+ 		HOST=s390x-linux-gnu
+ 		;;
++	loong64)
++		HOST=loongarch64-linux-gnu
++		;;
+ 	*)
+ 		echo "set_cross_vars: unsupported architecture: $1" >&2
+ 		exit 1
+diff --git a/script/seccomp.sh b/script/seccomp.sh
+index beea612a..51791356 100755
+--- a/script/seccomp.sh
++++ b/script/seccomp.sh
+@@ -1,7 +1,7 @@
+ #!/bin/bash
+ 
+ set -e -u -o pipefail
+-
++set -x
+ # shellcheck source=./script/lib.sh
+ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+ 
+@@ -32,6 +32,14 @@ function build_libseccomp() {
+ 	srcdir="$(mktemp -d)"
+ 	tar xf "$tar" -C "$srcdir"
+ 	pushd "$srcdir/libseccomp-$ver" || return
++	wget https://github.com/seccomp/libseccomp/commit/6966ec77b195ac289ae168c7c5646d59a307f33f.patch
++	patch -p1 < 6966ec77b195ac289ae168c7c5646d59a307f33f.patch || sed -ri -e '/x86_64;/i\\tint loongarch64;' src/syscalls.h
++	rm -f *.patch src/syscalls.h.*
++	
++	apt update
++	apt install -y --no-install-recommends automake
++	automake_version=$(automake --version | awk 'NR==1{print $NF}')
++	sed -ri "s#1.16.2#${automake_version}#" aclocal.m4
+ 
+ 	# Build natively and install to /usr/local.
+ 	./configure \
+@@ -41,10 +49,11 @@ function build_libseccomp() {
+ 	make clean
+ 
+ 	# Build and install for additional architectures.
++	export CC=loongarch64-linux-gnu-gcc
+ 	local arch
+ 	for arch in "${arches[@]}"; do
+ 		set_cross_vars "$arch"
+-		./configure --host "$HOST" \
++		./configure --host $MACHTYPE \
+ 			--prefix="$dest/$arch" --libdir="$dest/$arch/lib" \
+ 			--enable-static --enable-shared
+ 		make install
+-- 
+2.25.1
+

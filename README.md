@@ -1,6 +1,8 @@
 ## compile-and-packages
 
 自己使用的一些静态编译和 rpm 包制作的经历，基本是使用 docker buildx build 构建出成品文件，仅供参考
+生成 patch 使用 `git format-patch HEAD~1`
+
 
 ## 说明
 
