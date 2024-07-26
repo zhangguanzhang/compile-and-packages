@@ -1,0 +1,99 @@
+From 1d053bb8de366cc8bf5b3769481dcf275a6d380a Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Wed, 24 Jul 2024 23:26:28 +0800
+Subject: [PATCH] patch
+
+---
+ Dockerfile           |  6 +++++-
+ cmd/derper/cert.go   |  6 +++---
+ cmd/derper/derper.go | 40 ++++++++++++++++++++--------------------
+ 3 files changed, 28 insertions(+), 24 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 8534563..c85168d 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -67,7 +67,11 @@ RUN GOARCH=$TARGETARCH go install -ldflags="\
+       -v ./cmd/tailscale ./cmd/tailscaled ./cmd/containerboot
+ 
+ FROM alpine:3.18
+-RUN apk add --no-cache ca-certificates iptables iproute2 ip6tables
++# https://github.com/kubernetes-sigs/iptables-wrappers
++ADD https://raw.githubusercontent.com/kubernetes-sigs/iptables-wrappers/v2/iptables-wrapper-installer.sh /iptables-wrapper-installer.sh
++RUN set -eux; \
++    apk add --no-cache ca-certificates iptables iproute2 ip6tables; \
++    sh /iptables-wrapper-installer.sh --no-sanity-check
+ 
+ COPY --from=build-env /go/bin/* /usr/local/bin/
+ # For compat with the previous run.sh, although ideally you should be
+diff --git a/cmd/derper/cert.go b/cmd/derper/cert.go
+index db84aa5..21bd23d 100644
+--- a/cmd/derper/cert.go
++++ b/cmd/derper/cert.go
+@@ -88,9 +88,9 @@ func (m *manualCertManager) TLSConfig() *tls.Config {
+ }
+ 
+ func (m *manualCertManager) getCertificate(hi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+-	if hi.ServerName != m.hostname {
+-		return nil, fmt.Errorf("cert mismatch with hostname: %q", hi.ServerName)
+-	}
++	// if hi.ServerName != m.hostname {
++	// 	return nil, fmt.Errorf("cert mismatch with hostname: %q", hi.ServerName)
++	// }
+ 
+ 	// Return a shallow copy of the cert so the caller can append to its
+ 	// Certificate field.
+diff --git a/cmd/derper/derper.go b/cmd/derper/derper.go
+index 7615117..c5c88b7 100644
+--- a/cmd/derper/derper.go
++++ b/cmd/derper/derper.go
+@@ -212,26 +212,26 @@ func main() {
+ 		tsweb.AddBrowserHeaders(w)
+ 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+ 		w.WriteHeader(200)
+-		io.WriteString(w, `<html><body>
+-<h1>DERP</h1>
+-<p>
+-  This is a <a href="https://tailscale.com/">Tailscale</a> DERP server.
+-</p>
+-<p>
+-  Documentation:
+-</p>
+-<ul>
+-  <li><a href="https://tailscale.com/kb/1232/derp-servers">About DERP</a></li>
+-  <li><a href="https://pkg.go.dev/tailscale.com/derp">Protocol & Go docs</a></li>
+-  <li><a href="https://github.com/tailscale/tailscale/tree/main/cmd/derper#derp">How to run a DERP server</a></li>
+-</ul>
+-`)
+-		if !*runDERP {
+-			io.WriteString(w, `<p>Status: <b>disabled</b></p>`)
+-		}
+-		if tsweb.AllowDebugAccess(r) {
+-			io.WriteString(w, "<p>Debug info at <a href='/debug/'>/debug/</a>.</p>\n")
+-		}
++		// 		io.WriteString(w, `<html><body>
++		// <h1>DERP</h1>
++		// <p>
++		//   This is a <a href="https://tailscale.com/">Tailscale</a> DERP server.
++		// </p>
++		// <p>
++		//   Documentation:
++		// </p>
++		// <ul>
++		//   <li><a href="https://tailscale.com/kb/1232/derp-servers">About DERP</a></li>
++		//   <li><a href="https://pkg.go.dev/tailscale.com/derp">Protocol & Go docs</a></li>
++		//   <li><a href="https://github.com/tailscale/tailscale/tree/main/cmd/derper#derp">How to run a DERP server</a></li>
++		// </ul>
++		// `)
++		// 		if !*runDERP {
++		// 			io.WriteString(w, `<p>Status: <b>disabled</b></p>`)
++		// 		}
++		// 		if tsweb.AllowDebugAccess(r) {
++		// 			io.WriteString(w, "<p>Debug info at <a href='/debug/'>/debug/</a>.</p>\n")
++		// 		}
+ 	}))
+ 	mux.Handle("/robots.txt", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+ 		tsweb.AddBrowserHeaders(w)
+-- 
+2.25.1
+
