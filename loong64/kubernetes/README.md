@@ -7,7 +7,9 @@ https://github.com/Loongson-Cloud-Community/kubernetes/blob/1.18.6-loong64/build
 KUBE_BUILD_PLATFORMS=linux/loong64  KUBE_BUILD_CONFORMANCE=n KUBE_BUILD_HYPERKUBE=n make quick-release # GOFLAGS=-v
 ```
 
-然后在目录 `_output/release-tars/`
+然后在目录:
+- `_output/release-tars/`
+- `_output/dockerized/bin/linux/loong64/`
 
 ## 一些说明
 

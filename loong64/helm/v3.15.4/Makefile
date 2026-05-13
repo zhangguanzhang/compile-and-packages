@@ -1,18 +1,16 @@
+include ../../../lib.Makefile
 include ../../lib.Makefile
-include ../lib.Makefile
 
 SOURCE_URL=https://github.com/helm/helm
 SOURCE=$(shell echo $(SOURCE_URL) | awk -F '/' '{print $$NF}' | awk -F '.' '{print $$1}')
 
 # v3.14.2
-TAG ?= v3.14.3
+TAG ?= v3.15.4
 
 default: build
 
 build_src/$(SOURCE):
 	git clone -b $(TAG) --depth=1 $(SOURCE_URL) $@
-	if [ -d $(TAG) ]; then cd $@ && \
-		git apply ../../$(TAG)/*.patch; fi
 
 build: build_src/$(SOURCE)
 	docker run --rm -e GOARCH=$(GOARCH) \

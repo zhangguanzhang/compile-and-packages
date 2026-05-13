@@ -1,0 +1,131 @@
+From 7984bd4dde8cf8366680ecc7e2d13c9e359ad336 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Mon, 8 Dec 2025 14:24:52 +0800
+Subject: [PATCH] support loong64
+
+Signed-off-by: zhangguanzhang <zhangguanzhang@qq.com>
+---
+ hack/lib/golang.sh                                     |  4 ++++
+ hack/lib/util.sh                                       |  6 ++++++
+ hack/lib/version.sh                                    |  2 +-
+ hack/local-up-cluster.sh                               |  6 ++++++
+ .../runc/libcontainer/system/syscall_linux_64.go       |  4 ++--
+ vendor/go.etcd.io/bbolt/bolt_loong64.go                | 10 ++++++++++
+ 6 files changed, 29 insertions(+), 3 deletions(-)
+ create mode 100644 vendor/go.etcd.io/bbolt/bolt_loong64.go
+
+diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
+index 20e9e47a0e3..2dede205f0f 100755
+--- a/hack/lib/golang.sh
++++ b/hack/lib/golang.sh
+@@ -26,6 +26,7 @@ readonly KUBE_SUPPORTED_SERVER_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/loong64
+ )
+ 
+ # The node platforms we build for
+@@ -34,6 +35,7 @@ readonly KUBE_SUPPORTED_NODE_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/loong64
+   windows/amd64
+ )
+ 
+@@ -46,6 +48,7 @@ readonly KUBE_SUPPORTED_CLIENT_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/loong64
+   darwin/amd64
+   darwin/arm64
+   windows/amd64
+@@ -60,6 +63,7 @@ readonly KUBE_SUPPORTED_TEST_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/loong64
+   darwin/amd64
+   darwin/arm64
+   windows/amd64
+diff --git a/hack/lib/util.sh b/hack/lib/util.sh
+index a6bc6aa04e9..77b1c6985d9 100755
+--- a/hack/lib/util.sh
++++ b/hack/lib/util.sh
+@@ -185,6 +185,12 @@ kube::util::host_arch() {
+     ppc64le*)
+       host_arch=ppc64le
+       ;;
++    loong64*)
++      host_arch=loong64
++      ;;
++    loongarch64*)
++      host_arch=loong64
++      ;;
+     *)
+       kube::log::error "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x or ppc64le."
+       exit 1
+diff --git a/hack/lib/version.sh b/hack/lib/version.sh
+index f8dcc7b1ba8..1aca225cc81 100644
+--- a/hack/lib/version.sh
++++ b/hack/lib/version.sh
+@@ -91,7 +91,7 @@ kube::version::get_version_vars() {
+         # git describe --dirty only considers changes to existing files, but
+         # that is problematic since new untracked .go files affect the build,
+         # so use our idea of "dirty" from git status instead.
+-        KUBE_GIT_VERSION+="-dirty"
++        KUBE_GIT_VERSION+=""
+       fi
+ 
+ 
+diff --git a/hack/local-up-cluster.sh b/hack/local-up-cluster.sh
+index 09969f80901..7174f7e9392 100755
+--- a/hack/local-up-cluster.sh
++++ b/hack/local-up-cluster.sh
+@@ -305,6 +305,12 @@ function detect_binary {
+       ppc64le*)
+         host_arch=ppc64le
+         ;;
++      loong64*)
++        host_arch=loong64
++        ;;
++      loongarch64*)
++        host_arch=loong64
++        ;;
+       *)
+         echo "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x or ppc64le." >&2
+         exit 1
+diff --git a/vendor/github.com/opencontainers/runc/libcontainer/system/syscall_linux_64.go b/vendor/github.com/opencontainers/runc/libcontainer/system/syscall_linux_64.go
+index 1ed0dba1709..262450ad4cf 100644
+--- a/vendor/github.com/opencontainers/runc/libcontainer/system/syscall_linux_64.go
++++ b/vendor/github.com/opencontainers/runc/libcontainer/system/syscall_linux_64.go
+@@ -1,6 +1,6 @@
+-//go:build linux && (arm64 || amd64 || mips || mipsle || mips64 || mips64le || ppc || ppc64 || ppc64le || riscv64 || s390x)
++//go:build linux && (arm64 || amd64 || loong64 || mips || mipsle || mips64 || mips64le || ppc || ppc64 || ppc64le || riscv64 || s390x)
+ // +build linux
+-// +build arm64 amd64 mips mipsle mips64 mips64le ppc ppc64 ppc64le riscv64 s390x
++// +build arm64 amd64 loong64 mips mipsle mips64 mips64le ppc ppc64 ppc64le riscv64 s390x
+ 
+ package system
+ 
+diff --git a/vendor/go.etcd.io/bbolt/bolt_loong64.go b/vendor/go.etcd.io/bbolt/bolt_loong64.go
+new file mode 100644
+index 00000000000..31c17c1d070
+--- /dev/null
++++ b/vendor/go.etcd.io/bbolt/bolt_loong64.go
+@@ -0,0 +1,10 @@
++//go:build loong64
++// +build loong64
++
++package bbolt
++
++// maxMapSize represents the largest mmap size supported by Bolt.
++const maxMapSize = 0xFFFFFFFFFFFF // 256TB
++
++// maxAllocSize is the size used when creating array pointers.
++const maxAllocSize = 0x7FFFFFFF
+-- 
+2.50.1
+

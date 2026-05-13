@@ -1,0 +1,54 @@
+From cacb092ad6c2c91bcdce0f1862bfa0b2e1a19b03 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Wed, 13 Nov 2024 09:39:27 +0800
+Subject: [PATCH] add loong64 docker
+
+---
+ Dockerfile | 8 +++++---
+ go.mod     | 2 +-
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 4ad3d88d9..0e3f86b5a 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -25,11 +25,13 @@
+ # To see status:
+ #
+ #     $ docker exec tailscaled tailscale status
++ARG GO_IMG=registry.aliyuncs.com/zhangguanzhang/loong64:go1.23
++ARG BASE_IMG=cr.loongnix.cn/library/alpine:3.11
+ 
+-
+-FROM golang:1.23-alpine AS build-env
++FROM ${GO_IMG} AS build-env
+ 
+ WORKDIR /go/src/tailscale
++ENV GOARCH=loong64
+ 
+ COPY go.mod go.sum ./
+ RUN go mod download
+@@ -62,7 +64,7 @@ RUN GOARCH=$TARGETARCH go install -ldflags="\
+       -X tailscale.com/version.gitCommitStamp=$VERSION_GIT_HASH" \
+       -v ./cmd/tailscale ./cmd/tailscaled ./cmd/containerboot
+ 
+-FROM alpine:3.18
++FROM ${BASE_IMG}
+ RUN apk add --no-cache ca-certificates iptables iproute2 ip6tables
+ 
+ COPY --from=build-env /go/bin/* /usr/local/bin/
+diff --git a/go.mod b/go.mod
+index 464db8313..bbdc6e884 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,6 +1,6 @@
+ module tailscale.com
+ 
+-go 1.23.1
++go 1.23.0
+ 
+ require (
+ 	filippo.io/mkcert v1.4.4
+-- 
+2.25.1
+

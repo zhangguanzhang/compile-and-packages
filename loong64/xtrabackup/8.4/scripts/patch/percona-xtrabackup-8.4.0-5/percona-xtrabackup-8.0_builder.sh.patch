@@ -1,0 +1,35 @@
+--- percona-xtrabackup-8.0_builder.sh.raw	2026-04-28 10:16:40.929263919 +0800
++++ percona-xtrabackup-8.0_builder.sh	2026-04-28 10:24:19.734177026 +0800
+@@ -113,12 +113,18 @@
+         echo "Sources will not be downloaded"
+         return 0
+     fi
+-    git clone --depth 1 --branch $BRANCH "$REPO"
+-    retval=$?
+-    if [ $retval != 0 ]
+-    then
+-        echo "There were some issues during repo cloning from github. Please retry one more time"
+-        exit 1
++    local REPO_DIR
++    REPO_DIR=${REPO##*/}
++    REPO_DIR=${REPO_DIR%%.git}
++    if [ ! -d "${REPO_DIR}" ] && [ ! -f /tmp/percona-xtrabackup.flag ];then
++        git clone --depth 1 --branch $BRANCH "$REPO"
++        retval=$?
++        if [ $retval != 0 ]
++        then
++            echo "There were some issues during repo cloning from github. Please retry one more time"
++            exit 1
++        fi
++        touch /tmp/percona-xtrabackup.flag
+     fi
+ 
+     cd percona-xtrabackup
+@@ -591,6 +597,7 @@
+     get_tar "source_tarball"
+     rm -f *.dsc *.orig.tar.gz *.debian.tar* *.changes
+ 
++    cd $WORKDIR
+     TARFILE=$(basename $(find . -name 'percona-xtrabackup-*.tar.gz' | sort | tail -n1))
+     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
+     VERSION=$(echo ${TARFILE%.tar.gz} | awk -F '-' '{print $3"-"$4}')

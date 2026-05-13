@@ -1,0 +1,22 @@
+From 7b8b91adf28fb1c21a84961ed4b4b75aff78d457 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Mon, 11 Mar 2024 09:55:37 +0800
+Subject: [PATCH] support loong64
+
+---
+ vendor/github.com/cilium/ebpf/internal/endian_le.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/vendor/github.com/cilium/ebpf/internal/endian_le.go b/vendor/github.com/cilium/ebpf/internal/endian_le.go
+index 41a68224c..072eafcaa 100644
+--- a/vendor/github.com/cilium/ebpf/internal/endian_le.go
++++ b/vendor/github.com/cilium/ebpf/internal/endian_le.go
+@@ -1,4 +1,4 @@
+-//go:build 386 || amd64 || amd64p32 || arm || arm64 || mipsle || mips64le || mips64p32le || ppc64le || riscv64
++//go:build 386 || amd64 || amd64p32 || arm || arm64 || loong64 || mipsle || mips64le || mips64p32le || ppc64le || riscv64
+ // +build 386 amd64 amd64p32 arm arm64 mipsle mips64le mips64p32le ppc64le riscv64
+ 
+ package internal
+-- 
+2.25.1
+
