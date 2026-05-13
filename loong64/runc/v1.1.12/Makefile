@@ -1,5 +1,5 @@
+include ../../../lib.Makefile
 include ../../lib.Makefile
-include ../lib.Makefile
 
 SOURCE_URL=https://github.com/opencontainers/runc
 SOURCE=$(shell echo $(SOURCE_URL) | awk -F '/' '{print $$NF}' | awk -F '.' '{print $$1}')
@@ -10,8 +10,8 @@ default: build
 
 build_src/$(SOURCE):
 	git clone -b $(TAG) --depth=1 $(SOURCE_URL) $@
-	if [ -d $(TAG) ]; then cd $@ && \
-		git apply ../../$(TAG)/*.patch; fi
+	cd $@ && \
+		git apply ../../*.patch
 
 build: build_src/$(SOURCE)
 	# cd build_src/$(SOURCE) && make CONTAINER_ENGINE_BUILD_FLAGS="--build-arg GO_IMG=$(CC_GO_IMG)" RELEASE_ARGS="-a $(GOARCH)" release

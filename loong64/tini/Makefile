@@ -13,8 +13,17 @@ build_src/$(SOURCE):
 	if [ -d $(TAG) ]; then cd $@ && \
 		git apply ../../$(TAG)/*.patch; fi
 
-build: build_src/$(SOURCE)
+build-ABI2.0:
 	docker run --rm -e GOARCH=$(GOARCH) \
 		-e CC=loongarch64-linux-gnu-gcc \
 		-v `pwd`/build_src/$(SOURCE):/v -w /v $(CC_IMG) \
 		bash -c 'cmake . && make tini-static'
+build-ABI1.0:
+	docker run --rm -e GOARCH=$(GOARCH) \
+		-e CC=loongarch64-linux-gnu-gcc \
+		-e PATH=/loongson-gnu-toolchain/bin:$$PATH \
+		-v `pwd`/build_src/$(SOURCE):/v -w /v $(CC_IMG) \
+		bash -c 'cmake . && make tini-static'
+
+build: build_src/$(SOURCE) build-ABI$(ABI)
+	mv build_src/tini/tini-static docker-init

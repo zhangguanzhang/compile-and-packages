@@ -1,11 +1,10 @@
+include ../../../lib.Makefile
 include ../../lib.Makefile
-include ../lib.Makefile
 
-SOURCE_URL=https://github.com/moby/moby
+SOURCE_URL=https://github.com/cloudflare/cfssl
 SOURCE=$(shell echo $(SOURCE_URL) | awk -F '/' '{print $$NF}' | awk -F '.' '{print $$1}')
 
-# v25.0.4
-TAG ?= v25.0.5
+TAG ?= v1.6.5
 
 default: build
 
@@ -16,5 +15,6 @@ build_src/$(SOURCE):
 
 build: build_src/$(SOURCE)
 	docker run --rm -e GOARCH=$(GOARCH) \
-		-e  VERSION=$(patsubst v%,%,$(TAG)) \
-		-v `pwd`/build_src/$(SOURCE):/v -w /v $(GO_IMG) ./hack/make.sh binary-daemon binary-proxy
+		-e CGO_ENABLED=0 \
+		-v `pwd`/build_src/$(SOURCE):/v -w /v $(GO_IMG) \
+		sh -c 'TARGETOS=linux TARGETARCH=loong64 make bin/cfssl bin/cfssl-certinfo bin/cfssljson'

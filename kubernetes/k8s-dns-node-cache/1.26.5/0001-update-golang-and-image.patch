@@ -1,0 +1,39 @@
+From cf293f8ec2a8a6a8df342a7b04d2624740675559 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Mon, 1 Sep 2025 11:01:25 +0800
+Subject: [PATCH] update golang and image
+
+---
+ Makefile | 2 +-
+ rules.mk | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index e6de6803..b955afc1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -40,7 +40,7 @@ REGISTRY ?= gcr.io/k8s-staging-dns
+ # Default architecture to build for.
+ ARCH ?= amd64
+ # Image to use for building.
+-BUILD_IMAGE ?= golang:1.23.7-bookworm
++BUILD_IMAGE ?= m.daocloud.io/docker.io/library/golang:1.23.12-bookworm
+ # Containers will be named: $(CONTAINER_PREFIX)-$(BINARY)-$(ARCH):$(VERSION)
+ CONTAINER_PREFIX ?= k8s-dns
+ # Caching for go builds, disabled for CI
+diff --git a/rules.mk b/rules.mk
+index 27c21ea9..af9987d2 100644
+--- a/rules.mk
++++ b/rules.mk
+@@ -32,7 +32,7 @@ ALL_ARCH := amd64 arm arm64 ppc64le s390x
+ # Multiarch image
+ # Debian distroless image uploaded on 2025-03-28
+ BASEIMAGE ?= gcr.io/distroless/static-debian12@sha256:765ef30aff979959710073e7ba3b163d479a285d7d96d0020fca8c1501de48cb
+-IPTIMAGE ?= registry.k8s.io/build-image/distroless-iptables:v0.6.12@sha256:a9bb141f06c2ad392cf308f826fba5f7dfd8b78a8e33eb275a6857e13bc130c6
++IPTIMAGE ?= registry.k8s.io/build-image/distroless-iptables:v0.6.13
+ 
+ # These rules MUST be expanded at reference time (hence '=') as BINARY
+ # is dynamically scoped.
+-- 
+2.25.1
+

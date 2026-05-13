@@ -1,0 +1,33 @@
+From 3aa29c893d38924f8ecdec56440a304f03be2c82 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Thu, 12 Sep 2024 09:41:36 +0800
+Subject: [PATCH] for makefile
+
+---
+ Makefile.docker | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.docker b/Makefile.docker
+index c75f3cf..265dda1 100644
+--- a/Makefile.docker
++++ b/Makefile.docker
+@@ -29,6 +29,7 @@ endif
+ VERSION:=
+ # DOCKER is the docker image repo we need to push to.
+ DOCKER:=
++EXTRA_DOCKER_BUILD_ARGS:=
+ NAME:=coredns
+ GITHUB:=https://github.com/coredns/coredns/releases/download
+ # mips is not in LINUX_ARCH because it's not supported by docker manifest. Keep this list in sync with the one in Makefile.release
+@@ -87,7 +88,7 @@ else
+ 	    if [ "$${arch}" = "riscv64" ]; then \
+ 	        DOCKER_ARGS="--build-arg=DEBIAN_IMAGE=debian:unstable-slim --build-arg=BASE=ghcr.io/go-riscv/distroless/static-unstable:nonroot"; \
+ 	    fi; \
+-	    DOCKER_BUILDKIT=1 docker build --platform=$${arch} -t $(DOCKER_IMAGE_NAME):$${arch}-$(VERSION) $${DOCKER_ARGS} build/docker/$${arch} ;\
++	    DOCKER_BUILDKIT=1 docker build --platform=$${arch} -t $(DOCKER_IMAGE_NAME):$${arch}-$(VERSION) $${DOCKER_ARGS} $(EXTRA_DOCKER_BUILD_ARGS) build/docker/$${arch} ;\
+ 	done
+ endif
+ 
+-- 
+2.25.1
+

@@ -5,7 +5,7 @@ SOURCE_URL=https://github.com/docker/cli
 SOURCE=$(shell echo $(SOURCE_URL) | awk -F '/' '{print $$NF}' | awk -F '.' '{print $$1}')
 
 # v25.0.4
-TAG ?= v25.0.5
+TAG ?= v28.5.2
 
 default: build
 
@@ -15,5 +15,7 @@ build_src/$(SOURCE):
 		git apply ../../$(TAG)/*.patch; fi
 
 build: build_src/$(SOURCE)
-	docker run --rm -e GOARCH=$(GOARCH) \
-		-v `pwd`/build_src/$(SOURCE):/go/src/github.com/docker/cli -w /go/src/github.com/docker/cli $(GO_IMG) make binary
+	docker run --rm -e CGO_ENABLED=0 -e GOARCH=$(GOARCH) \
+		-v `pwd`/build_src/$(SOURCE):/go/src/github.com/docker/cli \
+		-v `pwd`:/go/src/github.com/docker/cli/build/ \
+		-w /go/src/github.com/docker/cli $(GO_IMG) make binary

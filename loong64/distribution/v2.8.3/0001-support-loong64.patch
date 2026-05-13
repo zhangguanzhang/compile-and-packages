@@ -1,0 +1,116 @@
+From e2e0ea20e5044b765b6df903c76b46952b33b3dc Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Thu, 16 Apr 2026 10:06:11 +0800
+Subject: [PATCH] support loong64
+
+Signed-off-by: zhangguanzhang <zhangguanzhang@qq.com>
+---
+ Dockerfile                                  | 17 ++++-------
+ Dockerfile.build                            | 32 +++++++++++++++++++++
+ vendor/github.com/bugsnag/panicwrap/dup2.go |  2 +-
+ vendor/github.com/bugsnag/panicwrap/dup3.go |  2 +-
+ 4 files changed, 40 insertions(+), 13 deletions(-)
+ create mode 100644 Dockerfile.build
+
+diff --git a/Dockerfile b/Dockerfile
+index ebd42c24..26bc04f7 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,13 +1,9 @@
+ # syntax=docker/dockerfile:1
+ 
+-ARG GO_VERSION=1.20.8
+-ARG ALPINE_VERSION=3.18
+-ARG XX_VERSION=1.2.1
+-
+-FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
+-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS base
+-COPY --from=xx / /
+-RUN apk add --no-cache bash coreutils file git
++ARG GO_IMG=cr.loongnix.cn/library/golang:1.25-buster
++ARG ALPINE=cr.loongnix.cn/library/alpine:3.11
++
++FROM ${GO_IMG} AS base
+ ENV GO111MODULE=auto
+ ENV CGO_ENABLED=0
+ WORKDIR /go/src/github.com/docker/distribution
+@@ -27,8 +23,7 @@ RUN --mount=type=bind,target=/go/src/github.com/docker/distribution,rw \
+     --mount=type=cache,target=/root/.cache/go-build \
+     --mount=target=/go/pkg/mod,type=cache \
+     --mount=type=bind,source=/tmp/.ldflags,target=/tmp/.ldflags,from=version \
+-      set -x ; xx-go build -tags "${BUILDTAGS}" -trimpath -ldflags "$(cat /tmp/.ldflags) ${LDFLAGS}" -o /usr/bin/registry ./cmd/registry \
+-      && xx-verify --static /usr/bin/registry
++      set -x ; CGO_ENABLED=0 GOARCH=loong64 go build -tags "${BUILDTAGS}" -trimpath -ldflags "$(cat /tmp/.ldflags) ${LDFLAGS}" -o /usr/bin/registry ./cmd/registry
+ 
+ FROM scratch AS binary
+ COPY --from=build /usr/bin/registry /
+@@ -50,7 +45,7 @@ RUN --mount=from=binary,target=/build \
+ FROM scratch AS artifact
+ COPY --from=releaser /out /
+ 
+-FROM alpine:${ALPINE_VERSION}
++FROM ${ALPINE}
+ RUN apk add --no-cache ca-certificates
+ COPY cmd/registry/config-dev.yml /etc/docker/registry/config.yml
+ COPY --from=binary /registry /bin/registry
+diff --git a/Dockerfile.build b/Dockerfile.build
+new file mode 100644
+index 00000000..2f605833
+--- /dev/null
++++ b/Dockerfile.build
+@@ -0,0 +1,32 @@
++# syntax=docker/dockerfile:1
++
++ARG GO_IMG=cr.loongnix.cn/library/golang:1.25-buster
++ARG ALPINE=cr.loongnix.cn/library/alpine:3.11
++
++FROM ${GO_IMG} AS builder
++ENV GO111MODULE=auto
++ENV CGO_ENABLED=0
++WORKDIR /go/src/github.com/docker/distribution
++
++COPY . .
++
++ARG PKG="github.com/docker/distribution"
++
++RUN set -x; \
++  VERSION=$(git describe --match 'v[0-9]*' --dirty='.m' --always --tags) REVISION=$(git rev-parse HEAD)$(if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi); \
++  echo "-X ${PKG}/version.Version=${VERSION#v} -X ${PKG}/version.Revision=${REVISION} -X ${PKG}/version.Package=${PKG}" | tee /tmp/.ldflags; \
++  echo -n "${VERSION}" | tee /tmp/.version;
++
++ARG LDFLAGS="-s -w"
++ARG BUILDTAGS="include_oss,include_gcs"
++RUN set -x ; \
++    GOARCH=loong64 go build -tags "${BUILDTAGS}" -trimpath -ldflags "$(cat /tmp/.ldflags) ${LDFLAGS}" -o /usr/bin/registry ./cmd/registry
++
++FROM ${ALPINE}
++RUN apk add --no-cache ca-certificates
++COPY cmd/registry/config-dev.yml /etc/docker/registry/config.yml
++COPY --from=builder /usr/bin/registry /bin/registry
++VOLUME ["/var/lib/registry"]
++EXPOSE 5000
++ENTRYPOINT ["registry"]
++CMD ["serve", "/etc/docker/registry/config.yml"]
+diff --git a/vendor/github.com/bugsnag/panicwrap/dup2.go b/vendor/github.com/bugsnag/panicwrap/dup2.go
+index de523c83..482eb779 100644
+--- a/vendor/github.com/bugsnag/panicwrap/dup2.go
++++ b/vendor/github.com/bugsnag/panicwrap/dup2.go
+@@ -1,4 +1,4 @@
+-// +build darwin dragonfly freebsd linux,!arm64 netbsd openbsd
++// +build darwin dragonfly freebsd !linux netbsd openbsd
+ 
+ package panicwrap
+ 
+diff --git a/vendor/github.com/bugsnag/panicwrap/dup3.go b/vendor/github.com/bugsnag/panicwrap/dup3.go
+index 9721b36c..cbb5d632 100644
+--- a/vendor/github.com/bugsnag/panicwrap/dup3.go
++++ b/vendor/github.com/bugsnag/panicwrap/dup3.go
+@@ -1,4 +1,4 @@
+-// +build linux,arm64
++// +build linux
+ 
+ package panicwrap
+ 
+-- 
+2.50.1
+

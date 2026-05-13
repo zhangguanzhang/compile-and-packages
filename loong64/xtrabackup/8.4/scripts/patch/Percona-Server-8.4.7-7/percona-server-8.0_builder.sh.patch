@@ -1,0 +1,44 @@
+--- percona-server-8.0_builder.sh	2026-02-05 12:58:09.205958169 +0800
++++ test	2026-02-05 14:29:30.450316418 +0800
+@@ -322,9 +322,9 @@
+     fi
+     cd ${WORKDIR}/percona-server
+ #
+-    mv "${WORKDIR}"/v8/LICENSE "${WORKDIR}"/v8/LICENSE.v8.libraries
++    #mv "${WORKDIR}"/v8/LICENSE "${WORKDIR}"/v8/LICENSE.v8.libraries
+     mkdir ${PSDIR}/js
+-    cp -v "${WORKDIR}"/v8/LICENSE* ${PSDIR}/js
++    #cp -v "${WORKDIR}"/v8/LICENSE* ${PSDIR}/js
+ #
+     tar --owner=0 --group=0 --exclude=.bzr --exclude=.git -czf ${PSDIR}.tar.gz ${PSDIR}
+ 
+@@ -849,6 +849,7 @@
+     get_tar "source_tarball"
+     rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
+     #
++    cd ${WORKDIR}
+ 
+     TARFILE=$(basename $(find . -name 'percona-server-*.tar.gz' | grep -v tokudb | sort | tail -n1))
+ 
+@@ -865,6 +866,8 @@
+     ls -la
+     cd percona-server-${VERSION}-${RELEASE}
+     cp -ap build-ps/debian/ .
++    sed -ri '\@cp js@d' debian/rules
++    rm -f debian/percona-server-js.install debian/percona-server-rocksdb.*
+     dch -D unstable --force-distribution -v "${VERSION}-${RELEASE}-${DEB_RELEASE}" "Update to new upstream release Percona Server ${VERSION}-${RELEASE}-1"
+     copyright-update -d debian/copyright
+     dpkg-buildpackage -S
+@@ -961,6 +964,12 @@
+         sed -i 's/export CFLAGS=/export CFLAGS=-Wno-error=deprecated-declarations -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=date-time -Wno-error=ignored-qualifiers -Wno-error=class-memaccess -Wno-error=shadow /' debian/rules
+         sed -i 's/export CXXFLAGS=/export CXXFLAGS=-Wno-error=deprecated-declarations -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=date-time -Wno-error=ignored-qualifiers -Wno-error=class-memaccess -Wno-error=shadow /' debian/rules
+     fi
++
++    if [ `uname -m` == loongarch64 ];then
++        unset CC CXX USE_THIS_GCC_VERSION
++        sed -ri '/DWITH_JS_LANG=ON/s#=ON.+#=OFF -DWITH_JS=OFF\\#' debian/rules
++    fi
++
+     dpkg-buildpackage -rfakeroot -uc -us -b
+ 
+     cd ${WORKDIR}
